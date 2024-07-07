@@ -1,4 +1,4 @@
-version: 0.2
+version: 0.2 
 #todo  make sure helm can run (install helm? and give permissions to service account to eks)
 #variables need to define - $ECR_REPOSITORY, $GIT_REPO, $AWS_ACCOUNT_ID
 #aws ecr get-login-password --region il-central-1 | docker login --username AWS --password-stdin 020590447512.dkr.ecr.il-central-1.amazonaws.com

@@ -75,14 +75,13 @@ phases:
         git commit -m "Update service version to $CODEBUILD_BUILD_NUMBER"
         git push -v origin helm
         else 
-        aws sts assume-role --role-arn $EKS_ARN --role-session-name EKS-Session --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --debug
         export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(aws sts assume-role --role-arn $EKS_ARN --role-session-name EKS-Session --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text))
         aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_ARN
         helm list        
         fi
 
 #        helm upgrade --install tekes-test .
-
+#        aws sts assume-role --role-arn $EKS_ARN --role-session-name EKS-Session --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --debug
 artifacts:
   files:
     - '**/*'

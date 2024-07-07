@@ -77,7 +77,7 @@ phases:
         git push -v origin helm
         else 
         export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(aws sts assume-role --role-arn $EKS_ARN --role-session-name EKS-Session --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text))
-        env
+        env | grep AWS_SECRET_ACCESS_KEY
         aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_ARN --debug
         helm list        
         fi

@@ -1,0 +1,83 @@
+version: 0.2
+#todo  make sure helm can run (install helm? and give permissions to service account to eks)
+#variables need to define - $ECR_REPOSITORY, $GIT_REPO, $AWS_ACCOUNT_ID
+#aws ecr get-login-password --region il-central-1 | docker login --username AWS --password-stdin 020590447512.dkr.ecr.il-central-1.amazonaws.com
+#docker build -t mofa/tekes/dotnet/aspnet-dummy-web-app:$(tag) $(Build.SourcesDirectory)/.
+#make sure service account has permission as eks admin
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: il-central-1
+    GIT_REPO: "https://github.com/uriworkaccount/aspnet-dummy-web-app"
+    SSH_GIT_REPO: "git@github.com:uriworkaccount/aspnet-dummy-web-app.git"
+    AWS_ACCOUNT_ID: "020590447512"
+    ECR_REPOSITORY: "mofa/tekes/dotnet/aspnet-dummy-web-app"
+    HELM_VALUES_FILE: "values.yaml"
+    withArgo: "FALSE"
+    GIT_USERNAME: "uriworkaccount"
+    SSH_KEY_PARAM_NAME: "/mofa/ssh_key"
+
+
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR.
+      #- aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
+      - echo Setting up SSH...
+      - mkdir -p ~/.ssh
+      - aws ssm get-parameter --name $SSH_KEY_PARAM_NAME --with-decryption --query Parameter.Value --output text > ~/.ssh/id_rsa
+      #- cat ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - echo "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+      - echo Cloning GitHub repository $SSH_GIT_REPO
+      - git clone -b main $SSH_GIT_REPO
+      - cd aspnet-dummy-web-app
+
+      - echo install helm
+      - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+      - chmod 700 get_helm.sh
+      - ./get_helm.sh
+      - helm version
+
+  build:
+    commands:
+      - echo Building the Docker image.
+      #- docker build -t $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER -f Dockerfile .
+
+  post_build:
+    commands:
+      # - echo Pushing the Docker image to Amazon ECR $ECR_REPOSITORY
+      # - docker tag $ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER
+      # - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CODEBUILD_BUILD_NUMBER
+      - pwd
+      - ls -al
+      - git fetch
+      - git checkout helm
+      - pwd
+      - ls -al
+      - echo Updating Helm values.yaml.
+      - cat $HELM_VALUES_FILE | grep tag
+      #- sed -i "s/tag:.*/tag:\ $CODEBUILD_BUILD_NUMBER/" "$HELM_VALUES_FILE"
+      - cat $HELM_VALUES_FILE | grep tag
+      - |
+        if [ "$withArgo" == "TRUE" ]; then
+        echo "Update Helm Values in Git"
+        git config --global user.email "uriz@comm-it.com"
+        git config --global user.name "${GIT_USERNAME}"
+        git add $HELM_VALUES_FILE
+        git commit -m "Update service version to $CODEBUILD_BUILD_NUMBER"
+        git push -v origin helm
+        else 
+#        export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(aws sts assume-role --role-arn arn:aws:iam::123456789012:role/MyAssumedRole --role-session-name MySessionName --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text))
+
+        helm upgrade --install tekes-test .
+        fi
+
+
+artifacts:
+  files:
+    - '**/*'

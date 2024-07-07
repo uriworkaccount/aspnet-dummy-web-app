@@ -11,7 +11,7 @@ env:
     GIT_REPO: "https://github.com/uriworkaccount/aspnet-dummy-web-app"
     SSH_GIT_REPO: "git@github.com:uriworkaccount/aspnet-dummy-web-app.git"
     AWS_ACCOUNT_ID: "020590447512"
-    EKS_ARN: "arn:aws:iam::975050301675:role/tekes-eks-dev"
+    EKS_ARN: "arn:aws:iam::975050301675:role/role-eks-admin"
     EKS_CLUSTER_NAME: "eks-tekes-dev"
     ECR_REPOSITORY: "mofa/tekes/dotnet/aspnet-dummy-web-app"
     HELM_VALUES_FILE: "values.yaml"

@@ -3,19 +3,22 @@ version: 0.2
 #variables need to define - $ECR_REPOSITORY, $GIT_REPO, $AWS_ACCOUNT_ID
 #aws ecr get-login-password --region il-central-1 | docker login --username AWS --password-stdin 020590447512.dkr.ecr.il-central-1.amazonaws.com
 #docker build -t mofa/tekes/dotnet/aspnet-dummy-web-app:$(tag) $(Build.SourcesDirectory)/.
-#make sure service account has permission as eks admin
+#make sure service account has permission as eks admin - 
 
 env:
   variables:
-    AWS_DEFAULT_REGION: il-central-1
+    AWS_DEFAULT_REGION: "il-central-1"
     GIT_REPO: "https://github.com/uriworkaccount/aspnet-dummy-web-app"
     SSH_GIT_REPO: "git@github.com:uriworkaccount/aspnet-dummy-web-app.git"
     AWS_ACCOUNT_ID: "020590447512"
+    EKS_ARN: "arn:aws:iam::975050301675:instance-profile/role-eks-admin"
+    EKS_CLUSTER_NAME: "eks-tekes-dev"
     ECR_REPOSITORY: "mofa/tekes/dotnet/aspnet-dummy-web-app"
     HELM_VALUES_FILE: "values.yaml"
     withArgo: "FALSE"
     GIT_USERNAME: "uriworkaccount"
     SSH_KEY_PARAM_NAME: "/mofa/ssh_key"
+    CLUSTER_NAME: ""
 
 
 
@@ -72,9 +75,10 @@ phases:
         git commit -m "Update service version to $CODEBUILD_BUILD_NUMBER"
         git push -v origin helm
         else 
-#        export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(aws sts assume-role --role-arn arn:aws:iam::123456789012:role/MyAssumedRole --role-session-name MySessionName --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text))
-
-        helm upgrade --install tekes-test .
+        export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" $(aws sts assume-role --role-arn $EKS_ARN --role-session-name EKS-Session --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" --output text))
+        aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME --role-arn $EKS_ARN
+        helm list        
+#        helm upgrade --install tekes-test .
         fi
 
 

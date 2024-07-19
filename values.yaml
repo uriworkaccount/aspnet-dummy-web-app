@@ -8,7 +8,7 @@ image:
   repository: "020590447512.dkr.ecr.il-central-1.amazonaws.com/mofa/tekes/dotnet/aspnet-dummy-web-app"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 36
+  tag: 61
 
 imagePullSecrets:
 - name: tekes-apps-secret
